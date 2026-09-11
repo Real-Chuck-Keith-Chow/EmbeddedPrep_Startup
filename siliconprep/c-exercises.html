@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Problems — SiliconPrep</title>
-<meta name="description" content="Browse Verilog, SystemVerilog and VHDL practice problems by topic, language and difficulty.">
+<title>C Exercises — SiliconPrep</title>
+<meta name="description" content="Fill-in-the-blank C coding exercises, including bit-masking patterns used in real GPIO/hardware code.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%230a0d0b'/%3E%3Cpath d='M3 15h3v-6h3v9h3v-12h3v9h3v-6h4' stroke='%23f2a94e' stroke-width='2' fill='none'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,9 +20,9 @@
       SiliconPrep
     </a>
     <div class="nav-links">
-      <a href="problems.html" class="active">Problems</a>
+      <a href="problems.html">Problems</a>
       <a href="quiz.html">Quiz</a>
-      <a href="c-exercises.html">Exercises</a>
+      <a href="c-exercises.html" class="active">Exercises</a>
       <a href="index.html#tracks">Tracks</a>
       <a href="index.html#practice">Topics</a>
     </div>
@@ -38,46 +38,15 @@
 
 <div class="container">
   <div class="page-head">
-    <h1>Problems</h1>
-    <p>24 problems across combinational, sequential, memory, protocol and verification topics.</p>
+    <h1>C Exercises</h1>
+    <p>Fill in the blank to complete each snippet — including a couple of bit-masking patterns straight out of real GPIO code.</p>
   </div>
 
-  <div class="filter-bar">
-    <input type="search" id="search" placeholder="Search problems…" aria-label="Search problems">
-    <select id="filter-lang" aria-label="Filter by language">
-      <option value="">All languages</option>
-      <option value="verilog">Verilog</option>
-      <option value="sv">SystemVerilog</option>
-      <option value="vhdl">VHDL</option>
-    </select>
-    <select id="filter-topic" aria-label="Filter by topic">
-      <option value="">All topics</option>
-    </select>
-    <select id="filter-difficulty" aria-label="Filter by difficulty">
-      <option value="">All difficulties</option>
-      <option value="easy">Easy</option>
-      <option value="medium">Medium</option>
-      <option value="hard">Hard</option>
-    </select>
-  </div>
+  <p class="quiz-summary" id="exercise-summary"></p>
 
-  <p class="result-count" id="result-count"></p>
+  <div id="exercise-host"></div>
 
-  <div class="problem-table-wrap">
-    <table class="problem-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Title</th>
-          <th>Topic</th>
-          <th>Difficulty</th>
-          <th>Language</th>
-          <th>Success</th>
-        </tr>
-      </thead>
-      <tbody id="problem-rows"></tbody>
-    </table>
-  </div>
+  <div class="quiz-pagination" id="exercise-pagination"></div>
 </div>
 
 <footer class="site-footer">
@@ -85,15 +54,14 @@
     <p>SiliconPrep — a starter template. Rename it, brand it, make it yours.</p>
     <div class="footer-links">
       <a href="problems.html">Problems</a>
-      <a href="index.html#tracks">Tracks</a>
-      <a href="#">GitHub</a>
+      <a href="quiz.html">Quiz</a>
+      <a href="c-exercises.html">Exercises</a>
     </div>
   </div>
 </footer>
 
-<script src="problems-data.js"></script>
-<script src="api.js"></script>
+<script src="c-exercises-data.js"></script>
 <script src="main.js"></script>
-<script src="problems.js"></script>
+<script src="c-exercises.js"></script>
 </body>
 </html>

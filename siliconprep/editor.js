@@ -1,57 +1,16 @@
-// Starter code per language for this problem. In a real build, this (and the
-// problem text on the left) would come from your API/database keyed by problem id.
-const STARTERS = {
-  verilog: `module mux2to1 (
-    input  wire sel,
-    input  wire a,
-    input  wire b,
-    output wire y
-);
-
-    // TODO: implement y = sel ? b : a
-
-endmodule
-`,
-  sv: `module mux2to1 (
-    input  logic sel,
-    input  logic a,
-    input  logic b,
-    output logic y
-);
-
-    // TODO: implement y = sel ? b : a
-
-endmodule
-`,
-  vhdl: `library ieee;
-use ieee.std_logic_1164.all;
-
-entity mux2to1 is
-    port (
-        sel : in  std_logic;
-        a   : in  std_logic;
-        b   : in  std_logic;
-        y   : out std_logic
-    );
-end entity;
-
-architecture rtl of mux2to1 is
-begin
-    -- TODO: implement y = sel ? b : a
-end architecture;
-`,
-};
-
+// Loads a problem from the API (via ?slug=... in the URL, falling back to a
+// default demo problem) and wires up the CodeMirror editor + Run/Submit.
+const DEFAULT_SLUG = "2-to-1-multiplexer";
 const MIME = { verilog: "text/x-verilog", sv: "text/x-systemverilog", vhdl: "text/x-vhdl" };
-const TOOL = { verilog: "iverilog", sv: "verilator", vhdl: "ghdl" };
-const EXT = { verilog: "v", sv: "sv", vhdl: "vhd" };
 
-let currentLang = "verilog";
 let editor;
+let currentLang = "verilog";
+let currentProblem = null;
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  const slug = new URLSearchParams(window.location.search).get("slug") || DEFAULT_SLUG;
+
   editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
-    value: STARTERS.verilog,
     mode: MIME.verilog,
     lineNumbers: true,
     indentUnit: 4,
@@ -59,22 +18,66 @@ document.addEventListener("DOMContentLoaded", () => {
     matchBrackets: true,
     viewportMargin: Infinity,
   });
-  editor.setValue(STARTERS.verilog);
 
-  document.querySelectorAll(".lang-tab").forEach((tab) => {
-    tab.addEventListener("click", () => {
-      document.querySelectorAll(".lang-tab").forEach((t) => t.classList.remove("active"));
-      tab.classList.add("active");
-      currentLang = tab.dataset.lang;
-      editor.setOption("mode", MIME[currentLang]);
-      editor.setValue(STARTERS[currentLang]);
-      resetConsole();
-    });
-  });
+  try {
+    currentProblem = await fetchProblem(slug);
+  } catch (err) {
+    console.error(err);
+    document.getElementById("problem-title").textContent = "Problem not found";
+    document.getElementById("problem-description").textContent =
+      `Couldn't find a problem with slug "${slug}". Open problems.html and click ` +
+      `into one from the list, or check problems-data.js for the correct slug.`;
+    return;
+  }
 
-  document.getElementById("run-btn").addEventListener("click", () => simulate(false));
-  document.getElementById("submit-btn").addEventListener("click", () => simulate(true));
+  renderProblem(currentProblem);
+  setupLangTabs(currentProblem);
+  loadLanguage(currentProblem.languages[0] || "verilog");
+
+  document.getElementById("run-btn").addEventListener("click", () => runJudge(false));
+  document.getElementById("submit-btn").addEventListener("click", () => runJudge(true));
 });
+
+function renderProblem(p) {
+  document.title = `${p.title} — SiliconPrep`;
+  document.getElementById("problem-title").textContent = p.title;
+  document.getElementById("problem-eyebrow").textContent =
+    `${String(p.id).padStart(2, "0")} · ${p.topic}`;
+
+  const pip = document.getElementById("problem-pip");
+  pip.textContent = capitalize(p.difficulty);
+  pip.className = `pip ${p.difficulty}`;
+
+  const tags = [p.topic, ...p.languages.map((l) => LANG_LABEL[l])];
+  document.getElementById("problem-tags").innerHTML = tags
+    .map((t) => `<span class="tag">${t}</span>`)
+    .join("");
+
+  document.getElementById("problem-description").textContent = p.description;
+  document.getElementById("problem-constraints").textContent = p.constraints;
+}
+
+function setupLangTabs(p) {
+  document.querySelectorAll(".lang-tab").forEach((tab) => {
+    const lang = tab.dataset.lang;
+    const supported = p.languages.includes(lang);
+    tab.disabled = !supported;
+    tab.classList.remove("active");
+    if (supported) {
+      tab.addEventListener("click", () => loadLanguage(lang));
+    }
+  });
+}
+
+function loadLanguage(lang) {
+  currentLang = lang;
+  document.querySelectorAll(".lang-tab").forEach((t) => {
+    t.classList.toggle("active", t.dataset.lang === lang);
+  });
+  editor.setOption("mode", MIME[lang]);
+  editor.setValue((currentProblem.starter_code && currentProblem.starter_code[lang]) || "");
+  resetConsole();
+}
 
 function resetConsole() {
   const badge = document.getElementById("run-status");
@@ -84,33 +87,49 @@ function resetConsole() {
     '<span class="muted">Click Run to compile and simulate against the hidden testbench.</span>';
 }
 
-// NOTE: this is mock output for scaffolding the UI. Replace with a real call to
-// your judge API, which should compile + simulate the submission in a sandboxed
-// container and return actual pass/fail results per test vector.
-function simulate(isSubmit) {
+async function runJudge(isSubmit) {
   const consoleBody = document.getElementById("console-body");
   const badge = document.getElementById("run-status");
-  const tool = TOOL[currentLang];
 
-  consoleBody.innerHTML = `<span class="muted">Compiling with ${tool}…</span>`;
+  consoleBody.innerHTML = '<span class="muted">Compiling…</span>';
   badge.textContent = "Running";
   badge.className = "status-badge";
 
-  setTimeout(() => {
-    const lines = [
-      `$ ${tool} mux2to1.${EXT[currentLang]} tb_mux2to1.${EXT[currentLang]}`,
-      `TESTBENCH: mux2to1`,
-      `  t=0   sel=0 a=1 b=0 -&gt; y=1  <span class="ok">[PASS]</span>`,
-      `  t=10  sel=1 a=1 b=0 -&gt; y=0  <span class="ok">[PASS]</span>`,
-      `  t=20  sel=0 a=0 b=1 -&gt; y=0  <span class="ok">[PASS]</span>`,
-      `  t=30  sel=1 a=0 b=1 -&gt; y=1  <span class="ok">[PASS]</span>`,
-      `4/4 test vectors passed`,
-      ``,
-      `<span class="muted">// Mock output — wire this up to a sandboxed ${tool}</span>`,
-      `<span class="muted">// backend to replace it with a real simulation.</span>`,
-    ];
-    consoleBody.innerHTML = lines.join("\n");
+  try {
+    const result = await submitCode({
+      problemId: currentProblem.id,
+      language: currentLang,
+      code: editor.getValue(),
+      isSubmit,
+    });
+    consoleBody.innerHTML = formatLog(result.log);
     badge.textContent = isSubmit ? "Submission accepted" : "All tests passed";
-    badge.className = "status-badge pass";
-  }, 650);
+    badge.className = `status-badge ${result.status === "passed" ? "pass" : "fail"}`;
+  } catch (err) {
+    console.error(err);
+    consoleBody.innerHTML = `<span class="fail">Something went wrong running the judge — check the browser console for details.</span>`;
+    badge.textContent = "Error";
+    badge.className = "status-badge fail";
+  }
+}
+
+// Turns the plain-text judge log into lightly colored HTML.
+function formatLog(text) {
+  return text
+    .split("\n")
+    .map((line) => {
+      if (line.includes("[PASS]")) return `<span class="ok">${escapeHtml(line)}</span>`;
+      if (line.includes("[FAIL]")) return `<span class="fail">${escapeHtml(line)}</span>`;
+      if (line.trim().startsWith("//")) return `<span class="muted">${escapeHtml(line)}</span>`;
+      return escapeHtml(line);
+    })
+    .join("\n");
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function capitalize(s) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }

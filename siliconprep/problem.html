@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>2-to-1 Multiplexer — SiliconPrep</title>
-<meta name="description" content="Practice problem: implement a 2-to-1 multiplexer in Verilog, SystemVerilog or VHDL, graded against a testbench.">
+<title>Problem — SiliconPrep</title>
+<meta name="description" content="Solve a hardware description language practice problem, graded against a testbench.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%230a0d0b'/%3E%3Cpath d='M3 15h3v-6h3v9h3v-12h3v9h3v-6h4' stroke='%23f2a94e' stroke-width='2' fill='none'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,6 +22,8 @@
     </a>
     <div class="nav-links">
       <a href="problems.html" class="active">Problems</a>
+      <a href="quiz.html">Quiz</a>
+      <a href="c-exercises.html">Exercises</a>
       <a href="index.html#tracks">Tracks</a>
       <a href="index.html#practice">Topics</a>
     </div>
@@ -41,39 +43,16 @@
   <div class="problem-shell">
     <div class="panel">
       <div class="problem-meta">
-        <span class="pip easy">Easy</span>
-        <span style="font-family:var(--font-mono); font-size:12px; color:var(--text-muted)">01 · Combinational</span>
+        <span class="pip" id="problem-pip"></span>
+        <span style="font-family:var(--font-mono); font-size:12px; color:var(--text-muted)" id="problem-eyebrow"></span>
       </div>
-      <h1>2-to-1 Multiplexer</h1>
-      <div class="problem-tags">
-        <span class="tag">Combinational</span>
-        <span class="tag">Verilog</span>
-        <span class="tag">SystemVerilog</span>
-        <span class="tag">VHDL</span>
-      </div>
+      <h1 id="problem-title">Loading…</h1>
+      <div class="problem-tags" id="problem-tags"></div>
 
-      <p>Implement a 2-to-1 multiplexer. When <code>sel</code> is low, the output <code>y</code> follows input <code>a</code>. When <code>sel</code> is high, <code>y</code> follows input <code>b</code>.</p>
-
-      <h3>Interface</h3>
-      <p><code>sel</code>, <code>a</code>, <code>b</code> — 1-bit inputs &nbsp;·&nbsp; <code>y</code> — 1-bit output</p>
-
-      <h3>Truth table</h3>
-      <table class="truth-table">
-        <thead><tr><th>sel</th><th>a</th><th>b</th><th>y</th></tr></thead>
-        <tbody>
-          <tr><td>0</td><td>0</td><td>0</td><td>0</td></tr>
-          <tr><td>0</td><td>0</td><td>1</td><td>0</td></tr>
-          <tr><td>0</td><td>1</td><td>0</td><td>1</td></tr>
-          <tr><td>0</td><td>1</td><td>1</td><td>1</td></tr>
-          <tr><td>1</td><td>0</td><td>0</td><td>0</td></tr>
-          <tr><td>1</td><td>0</td><td>1</td><td>1</td></tr>
-          <tr><td>1</td><td>1</td><td>0</td><td>0</td></tr>
-          <tr><td>1</td><td>1</td><td>1</td><td>1</td></tr>
-        </tbody>
-      </table>
+      <p id="problem-description" style="white-space:pre-wrap"></p>
 
       <h3>Constraints</h3>
-      <p>Combinational only — no clock, no internal state. Any of <code>assign</code>, an <code>always_comb</code>/<code>always @(*)</code> block, or a VHDL concurrent statement is acceptable.</p>
+      <p id="problem-constraints" style="white-space:pre-wrap"></p>
     </div>
 
     <div class="panel editor-panel">
@@ -117,6 +96,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/verilog/verilog.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/vhdl/vhdl.min.js"></script>
 <script src="main.js"></script>
+<script src="problems-data.js"></script>
+<script src="api.js"></script>
 <script src="editor.js"></script>
 </body>
 </html>

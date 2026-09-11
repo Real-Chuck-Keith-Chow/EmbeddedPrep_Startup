@@ -1,5 +1,5 @@
-// Renders and filters the problem table. Backed by the mock data in data.js —
-// swap `PROBLEMS` for a fetch() to your API once the judge backend exists.
+// Renders and filters the problem table by calling the FastAPI backend
+// (see api.js). Filtering happens server-side: every change re-queries.
 document.addEventListener("DOMContentLoaded", () => {
   const rowsEl = document.getElementById("problem-rows");
   const countEl = document.getElementById("result-count");
@@ -8,52 +8,68 @@ document.addEventListener("DOMContentLoaded", () => {
   const topicEl = document.getElementById("filter-topic");
   const diffEl = document.getElementById("filter-difficulty");
 
-  // Populate the topic dropdown from whatever topics exist in the data.
-  const topics = [...new Set(PROBLEMS.map((p) => p.topic))].sort();
-  topics.forEach((t) => {
-    const opt = document.createElement("option");
-    opt.value = t;
-    opt.textContent = t;
-    topicEl.appendChild(opt);
-  });
+  let searchDebounce;
 
-  function render() {
-    const q = searchEl.value.trim().toLowerCase();
-    const lang = langEl.value;
-    const topic = topicEl.value;
-    const diff = diffEl.value;
+  async function loadTopics() {
+    try {
+      const topics = await fetchTopics();
+      topics.forEach((t) => {
+        const opt = document.createElement("option");
+        opt.value = t;
+        opt.textContent = t;
+        topicEl.appendChild(opt);
+      });
+    } catch (err) {
+      console.error(err);
+      // Non-fatal — the topic filter just stays at "All topics".
+    }
+  }
 
-    const filtered = PROBLEMS.filter((p) => {
-      if (q && !p.title.toLowerCase().includes(q)) return false;
-      if (lang && !p.langs.includes(lang)) return false;
-      if (topic && p.topic !== topic) return false;
-      if (diff && p.difficulty !== diff) return false;
-      return true;
-    });
+  async function render() {
+    const filters = {
+      search: searchEl.value.trim(),
+      language: langEl.value,
+      topic: topicEl.value,
+      difficulty: diffEl.value,
+    };
 
-    countEl.textContent = `${filtered.length} of ${PROBLEMS.length} problems`;
+    try {
+      const problems = await fetchProblems(filters);
+      countEl.textContent = `${problems.length} problem${problems.length === 1 ? "" : "s"}`;
+      rowsEl.innerHTML = problems.map(rowHtml).join("");
+    } catch (err) {
+      console.error(err);
+      countEl.textContent = "";
+      rowsEl.innerHTML = `<tr><td colspan="6" style="padding:24px 18px; color:var(--text-muted)">
+        Something went wrong loading the problem list — check the browser console for details.
+      </td></tr>`;
+    }
+  }
 
-    rowsEl.innerHTML = filtered
-      .map(
-        (p) => `
-      <tr onclick="window.location.href='problem.html?id=${p.id}'">
+  function rowHtml(p) {
+    return `
+      <tr onclick="window.location.href='problem.html?slug=${p.slug}'">
         <td class="num">${String(p.id).padStart(2, "0")}</td>
         <td class="title">${p.title}</td>
         <td>${p.topic}</td>
         <td><span class="pip ${p.difficulty}">${capitalize(p.difficulty)}</span></td>
-        <td>${p.langs.map((l) => `<span class="lang-tag">${LANG_LABEL[l]}</span>`).join(" ")}</td>
-        <td class="rate">${p.rate}%</td>
-      </tr>`
-      )
-      .join("");
+        <td>${p.languages.map((l) => `<span class="lang-tag">${LANG_LABEL[l]}</span>`).join(" ")}</td>
+        <td class="rate">${p.success_rate}%</td>
+      </tr>`;
   }
 
   function capitalize(s) {
     return s.charAt(0).toUpperCase() + s.slice(1);
   }
 
-  [searchEl, langEl, topicEl, diffEl].forEach((el) =>
-    el.addEventListener("input", render)
-  );
+  langEl.addEventListener("change", render);
+  topicEl.addEventListener("change", render);
+  diffEl.addEventListener("change", render);
+  searchEl.addEventListener("input", () => {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(render, 250);
+  });
+
+  loadTopics();
   render();
 });
