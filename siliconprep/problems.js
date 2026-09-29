@@ -36,7 +36,12 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const problems = await fetchProblems(filters);
       countEl.textContent = `${problems.length} problem${problems.length === 1 ? "" : "s"}`;
-      rowsEl.innerHTML = problems.map(rowHtml).join("");
+      rowsEl.innerHTML =
+        problems.length > 0
+          ? problems.map(rowHtml).join("")
+          : `<tr><td colspan="6" style="padding:24px 18px; color:var(--text-muted)">
+              No problems yet — check back soon.
+            </td></tr>`;
     } catch (err) {
       console.error(err);
       countEl.textContent = "";
