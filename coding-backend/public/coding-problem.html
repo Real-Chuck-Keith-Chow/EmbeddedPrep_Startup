@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Firmware Practice</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, sans-serif; background: #1e1e1e; color: #d4d4d4; height: 100vh; display: flex; flex-direction: column; }
+  header { padding: 10px 16px; background: #252526; display: flex; gap: 12px; align-items: center; border-bottom: 1px solid #333; }
+  header h1 { font-size: 16px; margin: 0; flex: 1; }
+  select, button { font: inherit; padding: 6px 14px; border-radius: 4px; border: 1px solid #444; background: #333; color: #eee; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  #runBtn { background: #0e639c; border-color: #0e639c; }
+  #checkBtn { background: #2e7d32; border-color: #2e7d32; }
+  main { flex: 1; display: grid; grid-template-columns: 340px 1fr; min-height: 0; }
+  #problem { padding: 16px; overflow: auto; border-right: 1px solid #333; }
+  #problem h2 { margin-top: 0; font-size: 18px; }
+  #problem pre { background: #2d2d2d; padding: 8px; border-radius: 4px; white-space: pre-wrap; }
+  #right { display: flex; flex-direction: column; min-height: 0; }
+  #editor { flex: 1; min-height: 200px; }
+  #bottom { height: 260px; display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid #333; }
+  .panel { padding: 8px 12px; overflow: auto; }
+  .panel + .panel { border-left: 1px solid #333; }
+  .panel h3 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: #999; }
+  textarea { width: 100%; height: 190px; background: #2d2d2d; color: #eee; border: 1px solid #444; border-radius: 4px; font-family: Consolas, monospace; padding: 6px; resize: none; }
+  #output { white-space: pre-wrap; font-family: Consolas, monospace; font-size: 13px; margin: 0; }
+  .pass { color: #4caf50; } .fail { color: #f44336; } .muted { color: #999; }
+  @media (max-width: 800px) { main { grid-template-columns: 1fr; } #problem { max-height: 160px; border-right: 0; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Firmware Practice</h1>
+  <select id="problemSelect"></select>
+  <button id="runBtn">▶ Run</button>
+  <button id="checkBtn">✔ Check</button>
+</header>
+ 
+<main>
+  <section id="problem"></section>
+  <section id="right">
+    <div id="editor"></div>
+    <div id="bottom">
+      <div class="panel"><h3>Input (stdin)</h3><textarea id="stdin" placeholder="Optional input for Run"></textarea></div>
+      <div class="panel"><h3>Output</h3><pre id="output" class="muted">Click Run to execute your code.</pre></div>
+    </div>
+  </section>
+</main>
+ 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+<script>
+  // Change this to your deployed backend URL later
+  // Served by the backend -> same origin. Opened as a plain file -> talk to localhost.
+  const API = location.protocol === 'file:' ? 'http://localhost:3000' : '';
+ 
+  // problem ids must match the keys in PROBLEMS in server.js
+  const PROBLEMS = [
+    {
+      id: 'sum-two', title: 'Sum of Two Numbers', language: 'c', monaco: 'c',
+      description: 'Read two integers from stdin and print their sum.',
+      example: 'Input:  2 3\nOutput: 5',
+      starter: '#include <stdio.h>\n\nint main(void) {\n    int a, b;\n    scanf("%d %d", &a, &b);\n    // TODO: print a + b\n    return 0;\n}\n',
+      sampleInput: '2 3\n',
+    },
+    {
+      id: 'hello-verilog', title: 'Hello Verilog', language: 'verilog', monaco: 'systemverilog',
+      description: 'Write a module named main that prints exactly:\nHello from Verilog inside Docker!\nthen ends the simulation with $finish.',
+      example: '',
+      starter: 'module main;\n  initial begin\n    // TODO: $display the message\n    $finish;\n  end\nendmodule\n',
+      sampleInput: '',
+    },
+  ];
+ 
+  const $ = (id) => document.getElementById(id);
+  const drafts = {}; // keeps each problem's code while switching
+  let editor, current = PROBLEMS[0];
+ 
+  // ---- Editor setup ----
+  require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' } });
+  require(['vs/editor/editor.main'], () => {
+    editor = monaco.editor.create($('editor'), {
+      value: current.starter, language: current.monaco, theme: 'vs-dark',
+      automaticLayout: true, minimap: { enabled: false }, fontSize: 14, tabSize: 4,
+    });
+    loadProblem(current.id, true);
+  });
+ 
+  PROBLEMS.forEach((p) => $('problemSelect').add(new Option(p.title, p.id)));
+  $('problemSelect').addEventListener('change', (e) => loadProblem(e.target.value));
+ 
+  function loadProblem(id, first) {
+    if (!first && editor) drafts[current.id] = editor.getValue();
+    current = PROBLEMS.find((p) => p.id === id);
+    $('problemSelect').value = id;
+ 
+    const box = $('problem');
+    box.innerHTML = '';
+    const h = document.createElement('h2'); h.textContent = current.title;
+    const d = document.createElement('p'); d.style.whiteSpace = 'pre-wrap'; d.textContent = current.description;
+    box.append(h, d);
+    if (current.example) {
+      const pre = document.createElement('pre'); pre.textContent = current.example; box.append(pre);
+    }
+ 
+    if (editor) {
+      monaco.editor.setModelLanguage(editor.getModel(), current.monaco);
+      editor.setValue(drafts[id] ?? current.starter);
+    }
+    $('stdin').value = current.sampleInput;
+    setOutput('Click Run to execute your code.', 'muted');
+  }
+ 
+  // ---- UI helpers ----
+  function setOutput(text, cls = '') { const o = $('output'); o.textContent = text; o.className = cls; }
+  function busy(on) { $('runBtn').disabled = $('checkBtn').disabled = on; }
+ 
+  async function post(path, body) {
+    const res = await fetch(API + path, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `Server error (${res.status})`);
+    return data;
+  }
+ 
+  // ---- Run ----
+  $('runBtn').addEventListener('click', async () => {
+    busy(true); setOutput('Running...', 'muted');
+    try {
+      const r = await post('/run', { language: current.language, code: editor.getValue(), stdin: $('stdin').value });
+      let text = r.output || '(no output)';
+      if (r.exitCode !== 0 && !r.timedOut) text += `\n\n[exit code ${r.exitCode}]`;
+      setOutput(text, r.exitCode === 0 ? '' : 'fail');
+    } catch (err) {
+      setOutput('Could not reach the server: ' + err.message, 'fail');
+    } finally { busy(false); }
+  });
+ 
+  // ---- Check ----
+  $('checkBtn').addEventListener('click', async () => {
+    busy(true); setOutput('Checking against test cases...', 'muted');
+    try {
+      const r = await post('/check', { problemId: current.id, code: editor.getValue() });
+      const out = $('output'); out.className = ''; out.textContent = '';
+ 
+      const title = document.createElement('div');
+      title.className = r.passed ? 'pass' : 'fail';
+      title.textContent = r.passed ? '✔ All tests passed!' : '✘ Not correct yet';
+      title.style.fontWeight = 'bold';
+      out.append(title);
+ 
+      r.results.forEach((t) => {
+        const line = document.createElement('div');
+        line.className = t.passed ? 'pass' : 'fail';
+        line.textContent = `Test ${t.test}: ${t.passed ? 'passed' : t.timedOut ? 'time limit exceeded' : 'failed'}`;
+        out.append(line);
+        if (!t.passed && t.output) {
+          const pre = document.createElement('div');
+          pre.className = 'muted';
+          pre.textContent = 'Your output:\n' + t.output;
+          out.append(pre);
+        }
+      });
+    } catch (err) {
+      setOutput('Could not check: ' + err.message, 'fail');
+    } finally { busy(false); }
+  });
+</script>
+</body>
+</html>
+ 
