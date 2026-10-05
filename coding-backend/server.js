@@ -1,13 +1,18 @@
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 const Docker = require('dockerode');
  
 const app = express();
 const docker = new Docker();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '127.0.0.1'; // only the reverse proxy (Caddy) talks to us
+const CORS_ORIGIN = process.env.CORS_ORIGIN; // e.g. https://real-chuck-keith-chow.github.io
  
-app.use(cors()); // restrict to your site's origin in production: cors({ origin: 'https://yoursite.com' })
+app.set('trust proxy', 1); // we sit behind Caddy, so use the real client IP
+app.use(cors(CORS_ORIGIN ? { origin: CORS_ORIGIN } : undefined)); // no env var = allow all (local dev)
+app.use(['/run', '/check'], rateLimit({ windowMs: 60_000, limit: 20, message: { error: 'Too many runs, slow down' } }));
 app.use(express.json({ limit: '100kb' }));
 app.use(express.static(path.join(__dirname, 'public'))); // only the "public" folder is served
  
@@ -21,7 +26,7 @@ const LANGUAGES = {
   c: {
     image: 'gcc:latest',
     filename: 'solution.c',
-    compile: 'gcc solution.c -o solution',
+    compile: 'gcc solution.c -o solution -lm',
     run: './solution',
   },
   verilog: {
@@ -214,6 +219,9 @@ app.post('/check', async (req, res) => {
     console.error('Could not prepare Docker images (is Docker running?):', err.message);
     process.exit(1);
   }
-  app.listen(PORT, () => console.log(`Backend server running on http://localhost:${PORT}`));
+  app.listen(PORT, HOST, (err) => {
+    if (err) { console.error('Could not start server:', err.message); process.exit(1); }
+    console.log(`Backend server running on http://${HOST}:${PORT}`);
+  });
 })();
  
