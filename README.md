@@ -1,34 +1,13 @@
-# FPGA LeetCode
+<img width="1536" height="826" alt="image" src="https://github.com/user-attachments/assets/fc96187d-b587-46f1-8425-f509d395fad2" />
 
-Learn Verilog through coding challenges in your browser.
 
-## What is this?
 
-A website where you solve Verilog coding problems, like LeetCode but for hardware design. Write code, run simulation, get instant feedback.
 
-## Current Status
 
-**Early development.** Nothing working yet.
 
-## Planned Features
+<img width="1917" height="932" alt="image" src="https://github.com/user-attachments/assets/53da5fef-25db-4694-9419-c07a92dd0479" />
 
-- Verilog code editor in the browser
-- Run simulation with one click
-- Waveform viewer for debugging
-- 30+ challenges (easy to hard)
-- Pass/fail test cases
 
-## Tech Stack (Tentative)
 
-- Frontend: React
-- Editor: Monaco
-- Simulation: Verilator → WASM
-- Styling: Tailwind CSS
 
-## Running Locally
 
-```bash
-git clone https://github.com/yourusername/fpga-leetcode.git
-cd fpga-leetcode
-npm install
-npm run dev
