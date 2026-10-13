@@ -126,3 +126,66 @@ const PROBLEMS = RAW_PROBLEMS.map((p, i) => {
     ),
   };
 });
+
+// ---------------------------------------------------------------------------
+// Coding problems that run on the code-runner backend (coding-backend/server.js).
+// `slug` must match the key in PROBLEMS in server.js, which holds the hidden tests.
+// ---------------------------------------------------------------------------
+LANG_LABEL.c = "C";
+
+[
+  {
+    slug: "sum-two",
+    title: "Sum of Two Numbers",
+    topic: "Embedded C",
+    difficulty: "easy",
+    lang: "c",
+    description:
+      "Read two integers from stdin and print their sum.\n\nExample:\nInput:  2 3\nOutput: 5",
+    constraints: "Use scanf to read the input. Print only the sum.",
+    sample: "2 3\n",
+    starter:
+      '#include <stdio.h>\n\nint main(void) {\n    int a, b;\n    scanf("%d %d", &a, &b);\n    // TODO: print a + b\n    return 0;\n}\n',
+  },
+  {
+    slug: "endianness",
+    title: "Endianness and Byte Order",
+    topic: "Embedded C",
+    difficulty: "medium",
+    lang: "c",
+    description:
+      'Read one 32-bit hex value from stdin. Print three lines:\n1) "little" or "big" (detect it at runtime)\n2) the 4 bytes of the value in memory order, as lowercase hex separated by spaces\n3) the byte-swapped value as 0x followed by 8 lowercase hex digits\n\nHint: look at the value through a uint8_t pointer.\n\nExample:\nInput:  0x12345678\nOutput:\nlittle\n78 56 34 12\n0x78563412',
+    constraints: "Do not use htonl or other library byte-swap helpers.",
+    sample: "0x12345678\n",
+    starter:
+      '#include <stdio.h>\n#include <stdint.h>\n\nint main(void) {\n    unsigned int tmp;\n    scanf("%x", &tmp);\n    uint32_t v = tmp;\n\n    // TODO 1: print "little" or "big"\n    // TODO 2: print the bytes of v in memory order\n    // TODO 3: print the byte-swapped value as 0x%08x\n    return 0;\n}\n',
+  },
+  {
+    slug: "hello-verilog",
+    title: "Hello Verilog",
+    topic: "Verilog Basics",
+    difficulty: "easy",
+    lang: "verilog",
+    description:
+      "Write a module named main that prints exactly:\nHello from Verilog inside Docker!\nthen ends the simulation with $finish.",
+    constraints: "Use $display and $finish inside an initial block.",
+    sample: "",
+    starter:
+      "module main;\n  initial begin\n    // TODO: $display the message\n    $finish;\n  end\nendmodule\n",
+  },
+].forEach((p) => {
+  PROBLEMS.push({
+    id: PROBLEMS.length + 1,
+    slug: p.slug,
+    title: p.title,
+    topic: p.topic,
+    difficulty: p.difficulty,
+    success_rate: 0,
+    languages: [p.lang],
+    description: p.description,
+    constraints: p.constraints,
+    starter_code: { [p.lang]: p.starter },
+    sample_input: p.sample,
+    backend: true, // run on the code-runner server instead of the mock judge
+  });
+});
