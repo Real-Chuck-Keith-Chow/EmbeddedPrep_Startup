@@ -70,6 +70,13 @@
       starter: 'module main;\n  initial begin\n    // TODO: $display the message\n    $finish;\n  end\nendmodule\n',
       sampleInput: '',
     },
+        {
+      id: 'endianness', title: 'Endianness and Byte Order', language: 'c', monaco: 'c',
+      description: 'Read one 32-bit hex value from stdin. Print three lines:\n1) "little" or "big" (detect it at runtime)\n2) the 4 bytes in memory order, as lowercase hex separated by spaces\n3) the byte-swapped value as 0x followed by 8 hex digits\n\nHint: look at the value through a uint8_t pointer.',
+      example: 'Input:  0x12345678\nOutput:\nlittle\n78 56 34 12\n0x78563412',
+      starter: '#include <stdio.h>\n#include <stdint.h>\n\nint main(void) {\n    unsigned int tmp;\n    scanf("%x", &tmp);\n    uint32_t v = tmp;\n\n    // TODO 1: print "little" or "big"\n    // TODO 2: print the bytes of v in memory order\n    // TODO 3: print the byte-swapped value as 0x%08x\n    return 0;\n}\n',
+      sampleInput: '0x12345678\n',
+    },
   ];
  
   const $ = (id) => document.getElementById(id);

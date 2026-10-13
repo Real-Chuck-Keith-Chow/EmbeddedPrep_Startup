@@ -51,6 +51,16 @@ const PROBLEMS = {
     language: 'verilog',
     tests: [{ input: '', expected: 'Hello from Verilog inside Docker!' }],
   },
+    'endianness': {
+    language: 'c',
+    tests: [
+      { input: '0x12345678\n', expected: 'little\n78 56 34 12\n0x78563412' },
+      { input: '0xAABBCCDD\n', expected: 'little\ndd cc bb aa\n0xddccbbaa' },
+      { input: '0x00000001\n', expected: 'little\n01 00 00 00\n0x01000000' },
+      { input: '0xDEADBEEF\n', expected: 'little\nef be ad de\n0xefbeadde' },
+      { input: '0x0000FF00\n', expected: 'little\n00 ff 00 00\n0x00ff0000' },
+    ],
+  },
 };
  
 // ---------- Docker helpers ----------
